@@ -47,7 +47,7 @@ class MainViewModelTest {
     @Test
     fun whenMainViewModelClicked_showSnackbar() {
         runBlocking {
-            subject.snackbar.captureValues {
+            subject.snackbarLiveData.captureValues {
                 subject.onMainViewClicked()
                 assertSendsValues(2_000, "Hello, from threads!")
             }

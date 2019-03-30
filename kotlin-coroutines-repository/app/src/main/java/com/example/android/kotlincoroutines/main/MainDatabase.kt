@@ -61,7 +61,7 @@ private lateinit var INSTANCE: TitleDatabase
  */
 fun getDatabase(context: Context): TitleDatabase {
     synchronized(TitleDatabase::class) {
-        if (!::INSTANCE.isInitialized) {
+        if (::INSTANCE.isInitialized.not()) {
             INSTANCE = Room
                 .databaseBuilder(
                         context.applicationContext,

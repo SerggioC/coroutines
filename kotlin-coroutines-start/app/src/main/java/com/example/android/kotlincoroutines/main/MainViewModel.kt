@@ -16,10 +16,12 @@
 
 package com.example.android.kotlincoroutines.main
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.android.kotlincoroutines.util.BACKGROUND
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.*
 
 /**
  * MainViewModel designed to store and manage UI-related data in a lifecycle conscious way. This
@@ -29,38 +31,74 @@ import com.example.android.kotlincoroutines.util.BACKGROUND
  */
 class MainViewModel : ViewModel() {
 
+    /** Children of a supervisor job can fail independently of each other. */
+    private val supervisorJob = SupervisorJob()
+
+    /**Jobs can be arranged into parent-child hierarchies where cancellation
+     * of parent lead to an immediate cancellation of all its children.
+     * Failure or cancellation of a child with an exception other than
+     * CancellationException immediately cancels its parent.
+     * This way, parent can cancel its own children (including all their
+     * children recursively) without cancelling itself.*/
+    private val viewModelJob: Job = Job()
+    private val uiScope: CoroutineScope = CoroutineScope(Dispatchers.Main + viewModelJob)
+
+    override fun onCleared() {
+        super.onCleared()
+        viewModelJob.cancel()
+        uiScope.cancel() // DON'T!
+    }
+
     /**
-     * Request a snackbar to display a string.
+     * Request a snackbarLiveData to display a string.
      *
      * This variable is private because we don't want to expose MutableLiveData
      *
      * MutableLiveData allows anyone to set a value, and MainViewModel is the only
      * class that should be setting values.
      */
-    private val _snackBar = MutableLiveData<String>()
+    private val _snackBarLiveData = MutableLiveData<String>()
 
     /**
-     * Request a snackbar to display a string.
+     * Request a snackbarLiveData to display a string.
      */
-    val snackbar: LiveData<String>
-        get() = _snackBar
+    val snackbarLiveData: LiveData<String>
+        get() = _snackBarLiveData
 
-    /**
-     * Wait one second then display a snackbar.
-     */
-    fun onMainViewClicked() {
-        // TODO: Replace with coroutine implementation
-        BACKGROUND.submit {
-            Thread.sleep(1_000)
-            // use postValue since we're in a background thread
-            _snackBar.postValue("Hello, from threads!")
+    fun onViewClicked2(): Unit {
+        viewModelScope.launch(viewModelJob, CoroutineStart.LAZY) {
+            delay(1000) //non blocking delay; Schedules the operation for the specified time in future
         }
     }
 
     /**
-     * Called immediately after the UI shows the snackbar.
+     * Wait one second then display a snackbarLiveData.
+     */
+    fun onMainViewClicked() {
+        // TODO: Replace with coroutine implementation
+        val current = Thread.currentThread().name
+        Log.i("Sergio> ", "current: $current")
+        uiScope.launch {
+            val currente = Thread.currentThread().name
+            Log.i("Sergio> ", "current: $currente")
+            Thread.sleep(5_000)
+            Log.i("Sergio> ", "current: $currente")
+            // use postValue since we're in a background thread
+            _snackBarLiveData.postValue("Hello, from threads!")
+        }
+
+
+//        BACKGROUND.submit {
+//            Thread.sleep(1_000)
+//            // use postValue since we're in a background thread
+//            _snackBarLiveData.postValue("Hello, from threads!")
+//        }
+    }
+
+    /**
+     * Called immediately after the UI shows the snackbarLiveData.
      */
     fun onSnackbarShown() {
-        _snackBar.value = null
+        _snackBarLiveData.value = null
     }
 }

@@ -16,13 +16,20 @@
 
 package com.example.android.kotlincoroutines.main
 
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import androidx.constraintlayout.widget.ConstraintLayout
-import com.google.android.material.snackbar.Snackbar
+import android.view.Menu
+import androidx.annotation.UiThread
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProviders
 import com.example.android.kotlincoroutines.R
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 
 /**
  * Main Activity for our application. This activity uses [MainViewModel] to implement MVVM.
@@ -32,28 +39,37 @@ class MainActivity : AppCompatActivity() {
     /**
      * Inflate layout and setup click listeners and LiveData observers.
      */
+    @UiThread
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
 
-        val rootLayout: ConstraintLayout = findViewById(R.id.rootLayout)
 
         val viewModel = ViewModelProviders.of(this)
             .get(MainViewModel::class.java)
 
         // When rootLayout is clicked call onMainViewClicked in ViewModel
         rootLayout.setOnClickListener {
+            //CoroutineScope(Dispatchers.Main).launch { viewModel.onMainViewClicked() }
             viewModel.onMainViewClicked()
         }
 
-        // Show a snackbar whenever the [ViewModel.snackbar] is updated with a non-null value
-        viewModel.snackbar.observe(this, Observer { text ->
-            text?.let {
-                Snackbar.make(rootLayout, text, Snackbar.LENGTH_SHORT).show()
+        // Show a snackbarLiveData whenever the [ViewModel.snackbarLiveData] is updated with a non-null value
+        viewModel.snackbarLiveData.observe(this, Observer {
+            it?.let {
+                Snackbar.make(rootLayout, it, Snackbar.LENGTH_SHORT).show()
                 viewModel.onSnackbarShown()
             }
 
-        })
+        }
+        )
     }
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.app_menu, menu)
+        return true
+    }
+
 }

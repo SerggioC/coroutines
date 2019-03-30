@@ -39,7 +39,7 @@ import java.util.concurrent.Executors
  *
  */
 
-private const val ONE_SECOND = 1_000L
+private const val ONE_SECOND = 4_000L
 
 private const val ERROR_RATE = 0.3
 
@@ -60,7 +60,7 @@ fun fakeNetworkLibrary(from: List<String>): FakeNetworkCall<String> {
 
         // pretend we got a result from the passed list, or randomly an error
         if (DefaultErrorDecisionStrategy.shouldError()) {
-            result.onError(FakeNetworkException("Error contacting the network"))
+            result.onError(FakeNetworkException("Error contacting the network (RANDOM)"))
         } else {
             result.onSuccess(from[Random().nextInt(from.size)])
         }
